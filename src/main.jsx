@@ -39,7 +39,7 @@ import {
 import "./style.css";
 
 /* ✅ CHANGE THIS LINE ONLY */
-const API = import.meta.env.VITE_API_URL || "";
+const API = "";
 
 const GAMES = [
   "PUBG",
