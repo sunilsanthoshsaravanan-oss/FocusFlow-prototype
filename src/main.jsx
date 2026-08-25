@@ -9,11 +9,67 @@ const API = "";
 const GAMES = ["PUBG","COD","Genshin","BGMI","Free Fire","Valorant Mobile"];
 const CATEGORIES = {Instagram:"social",YouTube:"streaming",WhatsApp:"social",Chrome:"work",Spotify:"streaming",PUBG:"gaming",COD:"gaming",Genshin:"gaming",BGMI:"gaming","Free Fire":"gaming","Valorant Mobile":"gaming"};
 
-async function api(path, options={}) {
-  const r = await fetch(API + path, {headers:{"Content-Type":"application/json",...(options.headers||{})}, ...options});
-  if(!r.ok) throw new Error(await r.text());
+async function api(path, options = {}) {
+  // Frontend-only mode for Vercel
+  if (API === "") {
+    if (path === "/api/stats/daily") return {};
+
+    if (path === "/api/stats/anomaly")
+      return {
+        anomaly_score: 0,
+        message: "",
+        user_baseline: 0,
+        learned_days: 0,
+      };
+
+    if (path === "/api/stats/analytics")
+      return {
+        daily_streak: 7,
+        average_session_length: 25,
+        personal_best_minutes: 90,
+        monthly_focus_minutes: 420,
+        weekly_trend: [
+          { label: "Mon", avg_distraction: 25 },
+          { label: "Tue", avg_distraction: 40 },
+          { label: "Wed", avg_distraction: 32 },
+          { label: "Thu", avg_distraction: 28 },
+          { label: "Fri", avg_distraction: 45 },
+          { label: "Sat", avg_distraction: 20 },
+          { label: "Sun", avg_distraction: 18 },
+        ],
+        most_distracting_apps: [
+          { app: "Instagram", switches: 18 },
+          { app: "YouTube", switches: 12 },
+          { app: "WhatsApp", switches: 9 },
+          { app: "BGMI", switches: 6 },
+        ],
+        peak_hours: Array.from({ length: 24 }, (_, i) => ({
+          hour: i,
+          count: Math.floor(Math.random() * 5),
+        })),
+      };
+
+    if (path.startsWith("/api/history"))
+      return {
+        total_focus_minutes: 120,
+        sessions: [],
+      };
+
+    return { id: 1 };
+  }
+
+  const r = await fetch(API + path, {
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+    ...options,
+  });
+
+  if (!r.ok) throw new Error(await r.text());
   return r.json();
 }
+
 const getSettings=()=>JSON.parse(localStorage.getItem("ff_settings")||'{"sensitivity":"Medium","favorites":[],"peak":"18:00-21:00","duration":25,"threshold":60,"notifications":true,"share":false}');
 const saveSettings=s=>localStorage.setItem("ff_settings",JSON.stringify(s));
 
