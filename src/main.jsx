@@ -5,37 +5,53 @@ import {Activity, BarChart3, Bell, Brain, CheckCircle2, Clock3, Download, Flame,
 import {BarChart, Bar, CartesianGrid, LineChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis} from "recharts";
 import "./style.css";
 
+// ✅ Correct API for Vercel (works with or without backend)
 const API = import.meta.env.VITE_API_URL || "";
-const GAMES = ["PUBG","COD","Genshin","BGMI","Free Fire","Valorant Mobile"];
-const CATEGORIES = {Instagram:"social",YouTube:"streaming",WhatsApp:"social",Chrome:"work",Spotify:"streaming",PUBG:"gaming",COD:"gaming",Genshin:"gaming",BGMI:"gaming","Free Fire":"gaming","Valorant Mobile":"gaming"};
 
+const GAMES = ["PUBG", "COD", "Genshin", "BGMI", "Free Fire", "Valorant Mobile"];
+
+const CATEGORIES = {
+  Instagram: "social",
+  YouTube: "streaming",
+  WhatsApp: "social",
+  Chrome: "work",
+  Spotify: "streaming",
+  PUBG: "gaming",
+  COD: "gaming",
+  Genshin: "gaming",
+  BGMI: "gaming",
+  "Free Fire": "gaming",
+  "Valorant Mobile": "gaming",
+};
+
+// ✅ Mock API when backend is not deployed
 async function api(path, options = {}) {
-  // Frontend-only mode for Vercel
-  if (API === "") {
+  if (!API) {
     if (path === "/api/stats/daily") return {};
 
-    if (path === "/api/stats/anomaly")
+    if (path === "/api/stats/anomaly") {
       return {
         anomaly_score: 0,
-        message: "",
-        user_baseline: 0,
-        learned_days: 0,
+        message: "No anomaly detected",
+        user_baseline: 8,
+        learned_days: 7,
       };
+    }
 
-    if (path === "/api/stats/analytics")
+    if (path === "/api/stats/analytics") {
       return {
         daily_streak: 7,
         average_session_length: 25,
         personal_best_minutes: 90,
         monthly_focus_minutes: 420,
         weekly_trend: [
-          { label: "Mon", avg_distraction: 25 },
-          { label: "Tue", avg_distraction: 40 },
-          { label: "Wed", avg_distraction: 32 },
-          { label: "Thu", avg_distraction: 28 },
-          { label: "Fri", avg_distraction: 45 },
-          { label: "Sat", avg_distraction: 20 },
-          { label: "Sun", avg_distraction: 18 },
+          { label: "Mon", avg_distraction: 20 },
+          { label: "Tue", avg_distraction: 35 },
+          { label: "Wed", avg_distraction: 28 },
+          { label: "Thu", avg_distraction: 40 },
+          { label: "Fri", avg_distraction: 32 },
+          { label: "Sat", avg_distraction: 18 },
+          { label: "Sun", avg_distraction: 15 },
         ],
         most_distracting_apps: [
           { app: "Instagram", switches: 18 },
@@ -48,14 +64,20 @@ async function api(path, options = {}) {
           count: Math.floor(Math.random() * 5),
         })),
       };
+    }
 
-    if (path.startsWith("/api/history"))
+    if (path.startsWith("/api/history")) {
       return {
         total_focus_minutes: 120,
         sessions: [],
       };
+    }
 
-    return { id: 1 };
+    if (path === "/api/session" || path === "/api/event") {
+      return { id: Date.now() };
+    }
+
+    return {};
   }
 
   const r = await fetch(API + path, {
