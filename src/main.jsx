@@ -5,7 +5,7 @@ import {Activity, BarChart3, Bell, Brain, CheckCircle2, Clock3, Download, Flame,
 import {BarChart, Bar, CartesianGrid, LineChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis} from "recharts";
 import "./style.css";
 
-const API = "";
+const API = import.meta.env.VITE_API_URL;
 const GAMES = ["PUBG","COD","Genshin","BGMI","Free Fire","Valorant Mobile"];
 const CATEGORIES = {Instagram:"social",YouTube:"streaming",WhatsApp:"social",Chrome:"work",Spotify:"streaming",PUBG:"gaming",COD:"gaming",Genshin:"gaming",BGMI:"gaming","Free Fire":"gaming","Valorant Mobile":"gaming"};
 
