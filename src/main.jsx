@@ -24,63 +24,65 @@ const CATEGORIES = {
   "Valorant Mobile": "gaming",
 };
 
-// ✅ Mock API when backend is not deployed
 async function api(path, options = {}) {
+  // FRONTEND-ONLY MODE (works on Vercel/Netlify without backend)
   if (!API) {
-    if (path === "/api/stats/daily") return {};
+    switch (true) {
+      case path === "/api/stats/daily":
+        return {};
 
-    if (path === "/api/stats/anomaly") {
-      return {
-        anomaly_score: 0,
-        message: "No anomaly detected",
-        user_baseline: 8,
-        learned_days: 7,
-      };
+      case path === "/api/stats/anomaly":
+        return {
+          anomaly_score: 0,
+          message: "No anomaly detected.",
+          user_baseline: 8,
+          learned_days: 7,
+        };
+
+      case path === "/api/stats/analytics":
+        return {
+          daily_streak: 7,
+          average_session_length: 25,
+          personal_best_minutes: 90,
+          monthly_focus_minutes: 420,
+          weekly_trend: [
+            { label: "Mon", avg_distraction: 20 },
+            { label: "Tue", avg_distraction: 35 },
+            { label: "Wed", avg_distraction: 28 },
+            { label: "Thu", avg_distraction: 40 },
+            { label: "Fri", avg_distraction: 32 },
+            { label: "Sat", avg_distraction: 18 },
+            { label: "Sun", avg_distraction: 15 },
+          ],
+          most_distracting_apps: [
+            { app: "Instagram", switches: 18 },
+            { app: "YouTube", switches: 12 },
+            { app: "WhatsApp", switches: 9 },
+            { app: "BGMI", switches: 6 },
+          ],
+          peak_hours: Array.from({ length: 24 }, (_, i) => ({
+            hour: i,
+            count: Math.floor(Math.random() * 5),
+          })),
+        };
+
+      case path.startsWith("/api/history"):
+        return {
+          total_focus_minutes: 120,
+          sessions: [],
+        };
+
+      case path === "/api/session":
+      case path === "/api/event":
+        return { id: Date.now() };
+
+      default:
+        return {};
     }
-
-    if (path === "/api/stats/analytics") {
-      return {
-        daily_streak: 7,
-        average_session_length: 25,
-        personal_best_minutes: 90,
-        monthly_focus_minutes: 420,
-        weekly_trend: [
-          { label: "Mon", avg_distraction: 20 },
-          { label: "Tue", avg_distraction: 35 },
-          { label: "Wed", avg_distraction: 28 },
-          { label: "Thu", avg_distraction: 40 },
-          { label: "Fri", avg_distraction: 32 },
-          { label: "Sat", avg_distraction: 18 },
-          { label: "Sun", avg_distraction: 15 },
-        ],
-        most_distracting_apps: [
-          { app: "Instagram", switches: 18 },
-          { app: "YouTube", switches: 12 },
-          { app: "WhatsApp", switches: 9 },
-          { app: "BGMI", switches: 6 },
-        ],
-        peak_hours: Array.from({ length: 24 }, (_, i) => ({
-          hour: i,
-          count: Math.floor(Math.random() * 5),
-        })),
-      };
-    }
-
-    if (path.startsWith("/api/history")) {
-      return {
-        total_focus_minutes: 120,
-        sessions: [],
-      };
-    }
-
-    if (path === "/api/session" || path === "/api/event") {
-      return { id: Date.now() };
-    }
-
-    return {};
   }
 
-  const r = await fetch(API + path, {
+  // BACKEND MODE
+  const response = await fetch(API + path, {
     headers: {
       "Content-Type": "application/json",
       ...(options.headers || {}),
@@ -88,8 +90,9 @@ async function api(path, options = {}) {
     ...options,
   });
 
-  if (!r.ok) throw new Error(await r.text());
-  return r.json();
+  if (!response.ok) throw new Error(await response.text());
+
+  return response.json();
 }
 
 const getSettings=()=>JSON.parse(localStorage.getItem("ff_settings")||'{"sensitivity":"Medium","favorites":[],"peak":"18:00-21:00","duration":25,"threshold":60,"notifications":true,"share":false}');
