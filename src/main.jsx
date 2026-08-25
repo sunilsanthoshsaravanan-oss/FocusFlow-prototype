@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
-
 import {
   Activity,
   BarChart3,
@@ -21,7 +20,6 @@ import {
   TrendingUp,
   Users,
 } from "lucide-react";
-
 import {
   BarChart,
   Bar,
@@ -33,23 +31,31 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-
 import "./style.css";
 
-/* =========================================================
-   FOCUSFLOW
-   FRONTEND-ONLY VERSION
+/*
+=========================================================
+FOCUSFLOW — FRONTEND-ONLY PROTOTYPE
+=========================================================
 
-   No backend
-   No API
-   No database
-   No Python
-   No fetch()
-   Works with GitHub + Vercel
-========================================================= */
+No backend
+No Python
+No FastAPI
+No database
+No API calls
+No localhost dependency
+
+Works with:
+- Vite
+- GitHub
+- Vercel
+
+All prototype data is handled locally in the browser.
+=========================================================
+*/
 
 /* =========================================================
-   APP DATA
+   DATA
 ========================================================= */
 
 const CATEGORIES = {
@@ -66,17 +72,6 @@ const CATEGORIES = {
   "Valorant Mobile": "gaming",
 };
 
-/* =========================================================
-   LOCAL STORAGE KEYS
-========================================================= */
-
-const SETTINGS_KEY = "focusflow_settings";
-const HISTORY_KEY = "focusflow_history";
-
-/* =========================================================
-   DEFAULT SETTINGS
-========================================================= */
-
 const DEFAULT_SETTINGS = {
   sensitivity: "Medium",
   favorites: [],
@@ -88,12 +83,12 @@ const DEFAULT_SETTINGS = {
 };
 
 /* =========================================================
-   SETTINGS HELPERS
+   LOCAL STORAGE
 ========================================================= */
 
 function getSettings() {
   try {
-    const saved = localStorage.getItem(SETTINGS_KEY);
+    const saved = localStorage.getItem("ff_settings");
 
     if (!saved) {
       return DEFAULT_SETTINGS;
@@ -111,56 +106,12 @@ function getSettings() {
 function saveSettings(settings) {
   try {
     localStorage.setItem(
-      SETTINGS_KEY,
+      "ff_settings",
       JSON.stringify(settings)
     );
   } catch {
     // Ignore storage errors
   }
-}
-
-/* =========================================================
-   HISTORY HELPERS
-========================================================= */
-
-function getHistory() {
-  try {
-    const saved = localStorage.getItem(HISTORY_KEY);
-
-    if (!saved) {
-      return [];
-    }
-
-    const parsed = JSON.parse(saved);
-
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveHistory(history) {
-  try {
-    localStorage.setItem(
-      HISTORY_KEY,
-      JSON.stringify(history)
-    );
-  } catch {
-    // Ignore storage errors
-  }
-}
-
-function addSession(session) {
-  const history = getHistory();
-
-  const updated = [
-    session,
-    ...history,
-  ].slice(0, 100);
-
-  saveHistory(updated);
-
-  return updated;
 }
 
 /* =========================================================
@@ -171,13 +122,9 @@ function notify(title, body) {
   try {
     const settings = getSettings();
 
-    if (!settings.notifications) {
-      return;
-    }
+    if (!settings.notifications) return;
 
-    if (!("Notification" in window)) {
-      return;
-    }
+    if (!("Notification" in window)) return;
 
     if (Notification.permission === "granted") {
       new Notification(title, {
@@ -195,153 +142,45 @@ async function enableNotifications() {
       await Notification.requestPermission();
     }
   } catch {
-    // Ignore permission errors
+    // Ignore notification errors
   }
 }
 
 /* =========================================================
-   ANALYTICS DATA
+   LOCAL ANALYTICS DATA
 ========================================================= */
 
 function getAnalyticsData() {
-  const history = getHistory();
-
-  const completedSessions = history.filter(
-    (session) => session.completed
-  );
-
-  const totalMinutes = completedSessions.reduce(
-    (sum, session) =>
-      sum + Number(session.actual_minutes || 0),
-    0
-  );
-
-  const averageSession =
-    completedSessions.length > 0
-      ? Math.round(
-          totalMinutes /
-            completedSessions.length
-        )
-      : 25;
-
-  const personalBest =
-    completedSessions.length > 0
-      ? Math.max(
-          ...completedSessions.map(
-            (session) =>
-              Number(
-                session.actual_minutes || 0
-              )
-          )
-        )
-      : 90;
-
-  const now = new Date();
-
-  const startOfMonth = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    1
-  );
-
-  const monthlySessions =
-    completedSessions.filter(
-      (session) =>
-        new Date(session.date_time) >=
-        startOfMonth
-    );
-
-  const monthlyMinutes =
-    monthlySessions.reduce(
-      (sum, session) =>
-        sum +
-        Number(session.actual_minutes || 0),
-      0
-    );
-
-  const days = new Set(
-    completedSessions.map((session) =>
-      new Date(session.date_time)
-        .toDateString()
-    )
-  );
-
   return {
-    daily_streak:
-      completedSessions.length > 0
-        ? Math.min(days.size, 7)
-        : 0,
-
-    average_session_length:
-      averageSession,
-
-    personal_best_minutes:
-      personalBest,
-
-    monthly_focus_minutes:
-      monthlyMinutes,
+    daily_streak: 7,
+    average_session_length: 25,
+    personal_best_minutes: 90,
+    monthly_focus_minutes: 420,
 
     weekly_trend: [
-      {
-        label: "Mon",
-        avg_distraction: 20,
-      },
-      {
-        label: "Tue",
-        avg_distraction: 35,
-      },
-      {
-        label: "Wed",
-        avg_distraction: 28,
-      },
-      {
-        label: "Thu",
-        avg_distraction: 40,
-      },
-      {
-        label: "Fri",
-        avg_distraction: 32,
-      },
-      {
-        label: "Sat",
-        avg_distraction: 18,
-      },
-      {
-        label: "Sun",
-        avg_distraction: 15,
-      },
+      { label: "Mon", avg_distraction: 20 },
+      { label: "Tue", avg_distraction: 35 },
+      { label: "Wed", avg_distraction: 28 },
+      { label: "Thu", avg_distraction: 40 },
+      { label: "Fri", avg_distraction: 32 },
+      { label: "Sat", avg_distraction: 18 },
+      { label: "Sun", avg_distraction: 15 },
     ],
 
     most_distracting_apps: [
-      {
-        app: "Instagram",
-        switches: 18,
-      },
-      {
-        app: "YouTube",
-        switches: 12,
-      },
-      {
-        app: "WhatsApp",
-        switches: 9,
-      },
-      {
-        app: "BGMI",
-        switches: 6,
-      },
+      { app: "Instagram", switches: 18 },
+      { app: "YouTube", switches: 12 },
+      { app: "WhatsApp", switches: 9 },
+      { app: "BGMI", switches: 6 },
     ],
 
     peak_hours: Array.from(
       { length: 24 },
       (_, hour) => ({
         hour,
-        count:
-          completedSessions.filter(
-            (session) =>
-              new Date(
-                session.date_time
-              ).getHours() === hour
-          ).length,
+        count: [2, 3, 1, 4, 2, 5, 3, 2, 4, 1, 3, 5][
+          hour % 12
+        ],
       })
     ),
   };
@@ -353,9 +192,7 @@ function getAnalyticsData() {
 
 function Ring({ score }) {
   const radius = 62;
-
-  const circumference =
-    2 * Math.PI * radius;
+  const circumference = 2 * Math.PI * radius;
 
   const safeScore = Math.max(
     0,
@@ -364,8 +201,7 @@ function Ring({ score }) {
 
   const offset =
     circumference -
-    (safeScore / 100) *
-      circumference;
+    (safeScore / 100) * circumference;
 
   return (
     <div className="ring">
@@ -383,16 +219,13 @@ function Ring({ score }) {
           cy="75"
           r={radius}
           style={{
-            strokeDasharray:
-              circumference,
-            strokeDashoffset:
-              offset,
+            strokeDasharray: circumference,
+            strokeDashoffset: offset,
           }}
         />
       </svg>
 
       <b>{safeScore}</b>
-
       <small>/ 100</small>
     </div>
   );
@@ -402,10 +235,7 @@ function Ring({ score }) {
    TOP BAR
 ========================================================= */
 
-function Top({
-  title,
-  onHome,
-}) {
+function Top({ title, onHome }) {
   return (
     <header>
       <button
@@ -422,7 +252,7 @@ function Top({
       </strong>
 
       <span className="live">
-        ● LIVE
+        ● PROTOTYPE
       </span>
     </header>
   );
@@ -455,11 +285,8 @@ function Dashboard({
   setScore,
   setSessionId,
 }) {
-  const [events, setEvents] =
-    useState([]);
-
-  const [monitor, setMonitor] =
-    useState(false);
+  const [events, setEvents] = useState([]);
+  const [monitor, setMonitor] = useState(false);
 
   const apps = [
     "Instagram",
@@ -475,9 +302,7 @@ function Dashboard({
       CATEGORIES[app] || "other";
 
     const increase =
-      category === "gaming"
-        ? 10
-        : 7;
+      category === "gaming" ? 10 : 7;
 
     const nextScore = Math.min(
       100,
@@ -507,15 +332,13 @@ function Dashboard({
     if (category === "gaming") {
       notify(
         "Gaming Focus Mode",
-        "45-minute focus recommendation available."
+        "A 45-minute focus session is recommended."
       );
     }
   }
 
   async function auto() {
-    if (monitor) {
-      return;
-    }
+    if (monitor) return;
 
     setMonitor(true);
 
@@ -529,9 +352,8 @@ function Dashboard({
     ];
 
     for (const app of simulation) {
-      await new Promise(
-        (resolve) =>
-          setTimeout(resolve, 500)
+      await new Promise((resolve) =>
+        setTimeout(resolve, 500)
       );
 
       switchApp(app);
@@ -576,7 +398,7 @@ function Dashboard({
           <div className="row">
             <div>
               <span className="eyebrow">
-                LIVE DISTRACTION SCORE
+                PROTOTYPE DISTRACTION SCORE
               </span>
 
               <h3
@@ -616,9 +438,8 @@ function Dashboard({
               </b>
 
               <span>
-                Your current score is{" "}
-                {score}/100. Consider
-                starting a focus session.
+                Your current score is {score}/100.
+                Consider starting a focus session.
               </span>
             </div>
           </div>
@@ -664,12 +485,9 @@ function Dashboard({
             }
           >
             <BarChart3 />
-
             <b>Analytics</b>
-
             <span>
-              Weekly trends & app
-              patterns
+              Weekly trends & app patterns
             </span>
           </button>
 
@@ -680,12 +498,9 @@ function Dashboard({
             }
           >
             <Clock3 />
-
             <b>Session History</b>
-
             <span>
-              Review every focus
-              session
+              Review focus sessions
             </span>
           </button>
 
@@ -696,12 +511,9 @@ function Dashboard({
             }
           >
             <Gamepad2 />
-
             <b>Gaming Focus</b>
-
             <span>
-              iQOO-aware gaming
-              experience
+              iQOO-aware gaming experience
             </span>
           </button>
 
@@ -712,32 +524,15 @@ function Dashboard({
             }
           >
             <Settings />
-
             <b>Settings</b>
-
             <span>
               Personalize detection
-            </span>
-          </button>
-
-          <button
-            className="action"
-            onClick={() =>
-              go("social")
-            }
-          >
-            <Users />
-
-            <b>Social</b>
-
-            <span>
-              Share your focus streak
             </span>
           </button>
         </div>
 
         <div className="label">
-          TRY THE LIVE SIMULATION
+          TRY THE PROTOTYPE SIMULATION
         </div>
 
         <Card>
@@ -748,9 +543,8 @@ function Dashboard({
               </h2>
 
               <p>
-                Simulate app switching
-                and watch the score
-                change.
+                Simulate app switching and
+                watch the score change.
               </p>
             </div>
 
@@ -773,10 +567,7 @@ function Dashboard({
                   switchApp(app)
                 }
               >
-                <Smartphone
-                  size={15}
-                />
-
+                <Smartphone size={15} />
                 {app}
               </button>
             ))}
@@ -832,13 +623,12 @@ function Dashboard({
 
           <span>
             <b>
-              Technically honest MVP:
+              Technically honest prototype:
             </b>{" "}
-            the web version simulates
-            device behavior. Android
-            telemetry and hardware
-            controls would require a
-            native Android integration.
+            the web version simulates device
+            behavior. Real Android telemetry
+            and hardware controls would require
+            Android integration.
           </span>
         </div>
       </main>
@@ -862,9 +652,7 @@ function Analytics({ go }) {
       <div className="grid4">
         <Metric
           icon={<Flame />}
-          value={
-            data.daily_streak
-          }
+          value={data.daily_streak}
           label="Day streak"
         />
 
@@ -893,9 +681,7 @@ function Analytics({ go }) {
         </h2>
 
         <Chart
-          data={
-            data.weekly_trend
-          }
+          data={data.weekly_trend}
           dataKey="avg_distraction"
           type="line"
         />
@@ -944,8 +730,8 @@ function Analytics({ go }) {
         </div>
 
         <p className="muted">
-          Darker cells represent
-          more completed sessions.
+          Darker cells represent more
+          completed sessions.
         </p>
       </Card>
     </Page>
@@ -1055,14 +841,9 @@ function Focus({
   score,
   setScore,
 }) {
-  const settings =
-    getSettings();
-
   const [selected, setSelected] =
     useState(
-      score >= 60
-        ? 25
-        : settings.duration || 10
+      score >= 60 ? 25 : 10
     );
 
   const [left, setLeft] =
@@ -1077,9 +858,6 @@ function Focus({
   const [startScore, setStartScore] =
     useState(score);
 
-  const [sessionStartedAt, setSessionStartedAt] =
-    useState(null);
-
   useEffect(() => {
     if (
       !run ||
@@ -1091,12 +869,11 @@ function Focus({
 
     const timer =
       setInterval(() => {
-        setLeft(
-          (value) =>
-            Math.max(
-              0,
-              value - 1
-            )
+        setLeft((value) =>
+          Math.max(
+            0,
+            value - 1
+          )
         );
       }, 1000);
 
@@ -1116,6 +893,8 @@ function Focus({
       return;
     }
 
+    setRun(false);
+
     const newScore =
       Math.max(
         5,
@@ -1123,43 +902,6 @@ function Focus({
           startScore * 0.35
         )
       );
-
-    const startedAt =
-      sessionStartedAt ||
-      new Date().toISOString();
-
-    const session = {
-      id:
-        Date.now().toString(),
-
-      date_time:
-        new Date().toISOString(),
-
-      started_at:
-        startedAt,
-
-      planned_minutes:
-        selected,
-
-      actual_minutes:
-        selected,
-
-      interruptions: 0,
-
-      apps: [],
-
-      focus_score:
-        Math.max(
-          5,
-          100 - startScore
-        ),
-
-      completed: true,
-    };
-
-    addSession(session);
-
-    setRun(false);
 
     setScore(newScore);
 
@@ -1171,71 +913,26 @@ function Focus({
     left,
     run,
     startScore,
-    selected,
-    sessionStartedAt,
     setScore,
   ]);
 
   function start() {
     setStartScore(score);
 
-    setSessionStartedAt(
-      new Date().toISOString()
-    );
-
     setLeft(
       selected * 60
     );
 
     setRun(true);
-
     setPaused(false);
+
+    notify(
+      "FocusFlow",
+      `${selected}-minute focus session started.`
+    );
   }
 
   function endSession() {
-    const elapsedSeconds =
-      selected * 60 - left;
-
-    const actualMinutes =
-      Math.max(
-        0,
-        Math.floor(
-          elapsedSeconds / 60
-        )
-      );
-
-    if (actualMinutes > 0) {
-      addSession({
-        id:
-          Date.now().toString(),
-
-        date_time:
-          new Date().toISOString(),
-
-        started_at:
-          sessionStartedAt ||
-          new Date().toISOString(),
-
-        planned_minutes:
-          selected,
-
-        actual_minutes:
-          actualMinutes,
-
-        interruptions: 0,
-
-        apps: [],
-
-        focus_score:
-          Math.max(
-            5,
-            100 - startScore
-          ),
-
-        completed: false,
-      });
-    }
-
     setRun(false);
     setPaused(false);
     setLeft(0);
@@ -1315,11 +1012,17 @@ function Focus({
                 Math.floor(
                   left / 60
                 )
-              ).padStart(2, "0")}
+              ).padStart(
+                2,
+                "0"
+              )}
               :
               {String(
                 left % 60
-              ).padStart(2, "0")}
+              ).padStart(
+                2,
+                "0"
+              )}
             </div>
 
             <div className="progress">
@@ -1375,64 +1078,33 @@ function History({ go }) {
   const [period, setPeriod] =
     useState("month");
 
-  const [refresh, setRefresh] =
-    useState(0);
+  const [sessions, setSessions] =
+    useState([]);
 
-  const sessions =
-    getHistory();
+  const [totalMinutes, setTotalMinutes] =
+    useState(120);
 
-  function isInPeriod(session) {
-    const date =
-      new Date(
-        session.date_time
-      );
+  function addDemoSession() {
+    const newSession = {
+      id: Date.now(),
+      date: new Date(),
+      planned: 25,
+      actual: 25,
+      score: 87,
+      interruptions: 2,
+    };
 
-    const now =
-      new Date();
+    setSessions(
+      (previous) => [
+        newSession,
+        ...previous,
+      ]
+    );
 
-    if (period === "today") {
-      return (
-        date.toDateString() ===
-        now.toDateString()
-      );
-    }
-
-    if (period === "week") {
-      const weekAgo =
-        new Date(now);
-
-      weekAgo.setDate(
-        now.getDate() - 7
-      );
-
-      return date >= weekAgo;
-    }
-
-    const monthStart =
-      new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        1
-      );
-
-    return date >= monthStart;
+    setTotalMinutes(
+      (value) => value + 25
+    );
   }
-
-  const filtered =
-    sessions.filter(
-      isInPeriod
-    );
-
-  const totalFocus =
-    filtered.reduce(
-      (sum, session) =>
-        sum +
-        Number(
-          session.actual_minutes ||
-            0
-        ),
-      0
-    );
 
   return (
     <Page
@@ -1451,13 +1123,9 @@ function History({ go }) {
                 ? "on"
                 : ""
             }
-            onClick={() => {
-              setPeriod(item);
-              setRefresh(
-                (value) =>
-                  value + 1
-              );
-            }}
+            onClick={() =>
+              setPeriod(item)
+            }
             key={item}
           >
             {item}
@@ -1471,12 +1139,11 @@ function History({ go }) {
         </h2>
 
         <div className="big">
-          {totalFocus} min
+          {totalMinutes} min
         </div>
       </Card>
 
-      {filtered.length ===
-        0 && (
+      {sessions.length === 0 ? (
         <Card>
           <div className="empty">
             <Clock3 size={30} />
@@ -1486,70 +1153,52 @@ function History({ go }) {
             </h3>
 
             <p>
-              Complete a focus
-              session and your
-              history will appear
-              here.
+              Complete a focus session
+              and your history will
+              appear here.
             </p>
+
+            <button
+              className="secondary"
+              onClick={
+                addDemoSession
+              }
+            >
+              Add demo session
+            </button>
           </div>
         </Card>
-      )}
+      ) : (
+        sessions.map(
+          (session) => (
+            <Card
+              key={session.id}
+            >
+              <div className="row">
+                <div>
+                  <span className="eyebrow">
+                    {session.date.toLocaleString()}
+                  </span>
 
-      {filtered.map(
-        (session) => (
-          <Card
-            key={
-              session.id
-            }
-          >
-            <div className="row">
-              <div>
-                <span className="eyebrow">
-                  {new Date(
-                    session.date_time
-                  ).toLocaleString()}
-                </span>
+                  <h3>
+                    {session.actual} /
+                    {session.planned} min
+                  </h3>
 
-                <h3>
-                  {
-                    session.actual_minutes
-                  }{" "}
-                  /{" "}
-                  {
-                    session.planned_minutes
-                  }{" "}
-                  min
-                </h3>
+                  <p>
+                    {
+                      session.interruptions
+                    }{" "}
+                    interruptions
+                  </p>
+                </div>
 
-                <p>
-                  {
-                    session.interruptions
-                  }{" "}
-                  interruptions •{" "}
-                  {session.apps
-                    ?.length > 0
-                    ? session.apps.join(
-                        ", "
-                      )
-                    : "No apps"}
-                </p>
+                <b className="good">
+                  {session.score}%
+                </b>
               </div>
-
-              <b
-                className={
-                  session.completed
-                    ? "good"
-                    : "warn"
-                }
-              >
-                {Math.round(
-                  session.focus_score ||
-                    0
-                )}
-                %
-              </b>
-            </div>
-          </Card>
+            </Card>
+          )
         )
       )}
     </Page>
@@ -1578,25 +1227,21 @@ function Gaming({ go }) {
         </h1>
 
         <p>
-          Recommendations tailored
-          for iQOO users and gaming
-          sessions.
+          Recommendations tailored for
+          iQOO users and gaming sessions.
         </p>
       </div>
 
       <Card>
         <h2>
-          45-minute focus
-          recommendation
+          45-minute focus recommendation
         </h2>
 
         <p>
-          Gaming apps are
-          categorized separately,
-          so FocusFlow uses a
-          longer intervention
-          aligned with a typical
-          gaming session.
+          Gaming apps are categorized
+          separately, so FocusFlow uses
+          a longer intervention aligned
+          with a typical gaming session.
         </p>
 
         <button
@@ -1618,9 +1263,8 @@ function Gaming({ go }) {
           </h3>
 
           <p>
-            Recommended
-            performance settings
-            for gaming.
+            Recommended performance
+            settings for gaming.
           </p>
         </Card>
 
@@ -1632,8 +1276,8 @@ function Gaming({ go }) {
           </h3>
 
           <p>
-            Disable notifications
-            while gaming.
+            Disable notifications while
+            gaming.
           </p>
         </Card>
 
@@ -1645,8 +1289,8 @@ function Gaming({ go }) {
           </h3>
 
           <p>
-            High-refresh-rate
-            display recommended.
+            High-refresh-rate display
+            recommended.
           </p>
         </Card>
 
@@ -1669,13 +1313,11 @@ function Gaming({ go }) {
 
         <span>
           <b>
-            Partner integration
-            note:
+            Partner integration note:
           </b>{" "}
-          Hardware controls shown
-          here are recommendations,
-          not browser hardware-control
-          claims.
+          Hardware controls shown here
+          are recommendations, not browser
+          hardware-control claims.
         </span>
       </div>
     </Page>
@@ -1696,10 +1338,7 @@ function SettingsPage({ go }) {
     saveSettings(settings);
   }, [settings]);
 
-  function update(
-    key,
-    value
-  ) {
+  function update(key, value) {
     setSettings(
       (previous) => ({
         ...previous,
@@ -1708,9 +1347,7 @@ function SettingsPage({ go }) {
     );
   }
 
-  function toggleFavorite(
-    app
-  ) {
+  function toggleFavorite(app) {
     const exists =
       settings.favorites.includes(
         app
@@ -1730,61 +1367,24 @@ function SettingsPage({ go }) {
     );
   }
 
-  function exportReport() {
-    const history =
-      getHistory();
-
-    const totalMinutes =
-      history.reduce(
-        (sum, session) =>
-          sum +
-          Number(
-            session.actual_minutes ||
-              0
-          ),
-        0
-      );
-
-    const completed =
-      history.filter(
-        (session) =>
-          session.completed
-      ).length;
-
+  function downloadReport() {
     const report = [
-      "FocusFlow Report",
-      "=================",
+      "FocusFlow Prototype Report",
       "",
-      `Generated: ${new Date().toLocaleString()}`,
+      "Day streak: 7",
+      "Average session: 25 minutes",
+      "Personal best: 90 minutes",
+      "Monthly focus: 420 minutes",
       "",
-      `Total sessions: ${history.length}`,
-      `Completed sessions: ${completed}`,
-      `Total focus minutes: ${totalMinutes}`,
-      "",
-      "Settings",
-      "--------",
-      `Sensitivity: ${settings.sensitivity}`,
-      `Peak hours: ${settings.peak}`,
-      `Default duration: ${settings.duration} minutes`,
-      `Auto-focus threshold: ${settings.threshold}`,
-      "",
-      "Session History",
-      "---------------",
-      ...history.map(
-        (session) =>
-          `${new Date(
-            session.date_time
-          ).toLocaleString()} | ${session.actual_minutes}/${session.planned_minutes} min | ${session.completed ? "Completed" : "Ended early"}`
-      ),
+      "This report was generated by the frontend prototype.",
     ].join("\n");
 
-    const blob =
-      new Blob(
-        [report],
-        {
-          type: "text/plain",
-        }
-      );
+    const blob = new Blob(
+      [report],
+      {
+        type: "text/plain",
+      }
+    );
 
     const url =
       URL.createObjectURL(
@@ -1853,16 +1453,13 @@ function SettingsPage({ go }) {
 
       <Card>
         <h2>
-          Favorite apps /
-          whitelist
+          Favorite apps / whitelist
         </h2>
 
         <p className="muted">
-          Whitelisted apps are
-          excluded from
-          distraction scoring in
-          the planned Android
-          implementation.
+          Whitelisted apps are excluded
+          from distraction scoring in
+          the planned Android implementation.
         </p>
 
         <div className="appgrid">
@@ -1880,9 +1477,7 @@ function SettingsPage({ go }) {
                   : ""
               }
               onClick={() =>
-                toggleFavorite(
-                  app
-                )
+                toggleFavorite(app)
               }
               key={app}
             >
@@ -1894,14 +1489,11 @@ function SettingsPage({ go }) {
 
       <Card>
         <h2>
-          Peak productivity
-          hours
+          Peak productivity hours
         </h2>
 
         <input
-          value={
-            settings.peak
-          }
+          value={settings.peak}
           onChange={(event) =>
             update(
               "peak",
@@ -1913,20 +1505,16 @@ function SettingsPage({ go }) {
 
       <Card>
         <h2>
-          Default focus
-          duration
+          Default focus duration
         </h2>
 
         <select
-          value={
-            settings.duration
-          }
+          value={settings.duration}
           onChange={(event) =>
             update(
               "duration",
               Number(
-                event.target
-                  .value
+                event.target.value
               )
             )
           }
@@ -1942,7 +1530,7 @@ function SettingsPage({ go }) {
               key={minutes}
               value={minutes}
             >
-              {minutes}
+              {minutes} minutes
             </option>
           ))}
         </select>
@@ -1964,8 +1552,7 @@ function SettingsPage({ go }) {
             update(
               "threshold",
               Number(
-                event.target
-                  .value
+                event.target.value
               )
             )
           }
@@ -2011,14 +1598,11 @@ function SettingsPage({ go }) {
         <button
           className="secondary wide"
           onClick={
-            exportReport
+            downloadReport
           }
         >
-          <Download
-            size={15}
-          />
-
-          Download report
+          <Download size={15} />
+          Download prototype report
         </button>
       </Card>
     </Page>
@@ -2037,8 +1621,7 @@ function Social({ go }) {
     try {
       if (
         navigator.clipboard &&
-        navigator.clipboard
-          .writeText
+        navigator.clipboard.writeText
       ) {
         navigator.clipboard.writeText(
           status
@@ -2187,15 +1770,11 @@ function App() {
   const [score, setScore] =
     useState(18);
 
-  const [
-    sessionId,
-    setSessionId,
-  ] = useState(null);
+  const [sessionId, setSessionId] =
+    useState(null);
 
   function go(nextScreen) {
-    setScreen(
-      nextScreen
-    );
+    setScreen(nextScreen);
   }
 
   const commonProps = {
@@ -2207,13 +1786,10 @@ function App() {
   };
 
   if (
-    screen ===
-    "analytics"
+    screen === "analytics"
   ) {
     return (
-      <Analytics
-        go={go}
-      />
+      <Analytics go={go} />
     );
   }
 
@@ -2231,9 +1807,7 @@ function App() {
     screen === "history"
   ) {
     return (
-      <History
-        go={go}
-      />
+      <History go={go} />
     );
   }
 
@@ -2242,7 +1816,7 @@ function App() {
   ) {
     return (
       <Gaming
-        go={go}
+        {...commonProps}
       />
     );
   }
@@ -2261,9 +1835,7 @@ function App() {
     screen === "social"
   ) {
     return (
-      <Social
-        go={go}
-      />
+      <Social go={go} />
     );
   }
 
@@ -2278,19 +1850,8 @@ function App() {
    START REACT
 ========================================================= */
 
-const root =
-  document.getElementById(
-    "root"
-  );
-
-if (!root) {
-  throw new Error(
-    "FocusFlow: #root element was not found in index.html"
-  );
-}
-
 ReactDOM.createRoot(
-  root
+  document.getElementById("root")
 ).render(
   <React.StrictMode>
     <App />
